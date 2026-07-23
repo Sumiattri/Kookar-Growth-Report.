@@ -1,0 +1,13 @@
+{
+  "name": "kookar-growth-report-site",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "refresh": "node generate-growth-report-data.mjs",
+    "build": "mkdir -p dist && cp -R public/* dist/"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3"
+  }
+}

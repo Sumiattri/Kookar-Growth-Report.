@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kookar Growth Report</title>
+  <style>
+    :root { --bg:#fff8ef; --card:#ffffff; --ink:#24160f; --muted:#7b6a5d; --line:#ead9c7; --orange:#f97316; --green:#15803d; --blue:#1d4ed8; --red:#b91c1c; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:linear-gradient(180deg,#fff8ef,#fff); }
+    .wrap { max-width:1180px; margin:0 auto; padding:28px 18px 56px; }
+    header { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin-bottom:20px; }
+    h1 { margin:0 0 6px; font-size:30px; letter-spacing:-0.03em; }
+    .sub { color:var(--muted); font-size:14px; line-height:1.5; }
+    .pill { display:inline-flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid var(--line); border-radius:999px; background:#fff; font-weight:700; font-size:13px; color:#8a3b08; white-space:nowrap; }
+    .filters { display:grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap:12px; padding:14px; background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:0 10px 30px rgba(80,40,10,.06); margin-bottom:18px; }
+    label { display:block; font-size:12px; font-weight:800; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; }
+    input, select { width:100%; border:1px solid var(--line); border-radius:12px; padding:11px 12px; font-size:14px; background:#fffdf9; color:var(--ink); }
+    button { border:0; border-radius:12px; padding:11px 14px; background:var(--orange); color:#fff; font-weight:800; cursor:pointer; }
+    .cards { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px; margin:18px 0; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:0 10px 30px rgba(80,40,10,.05); }
+    .card .label { color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    .card .value { margin-top:8px; font-size:27px; font-weight:900; letter-spacing:-.03em; }
+    .card .hint { margin-top:4px; color:var(--muted); font-size:12px; }
+    .section { margin-top:22px; }
+    .section-head { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-bottom:10px; }
+    h2 { margin:0; font-size:20px; letter-spacing:-.02em; }
+    .note { color:var(--muted); font-size:13px; }
+    .table-card { background:var(--card); border:1px solid var(--line); border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(80,40,10,.05); }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th { background:#2a170e; color:#fff; text-align:left; padding:11px 10px; font-size:12px; white-space:nowrap; }
+    td { padding:11px 10px; border-top:1px solid #f1e4d6; vertical-align:top; }
+    tr:nth-child(even) td { background:#fffaf4; }
+    .num { text-align:right; font-variant-numeric: tabular-nums; }
+    .tag { display:inline-block; padding:4px 8px; border-radius:999px; font-weight:800; font-size:11px; white-space:nowrap; }
+    .paid { background:#dbeafe; color:#1d4ed8; }
+    .free { background:#dcfce7; color:#15803d; }
+    .direct { background:#ffedd5; color:#c2410c; }
+    .small { font-size:12px; color:var(--muted); }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .empty { padding:20px; color:var(--muted); text-align:center; }
+    @media (max-width:900px) { header,.section-head{display:block}.filters,.cards,.grid2{grid-template-columns:1fr}.table-card{overflow:auto} h1{font-size:24px} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Kookar Growth Report</h1>
+        <div class="sub">Simple view: paid ads split by destination cohort, plus direct website traffic. Data refreshes from Growth leads + Live onboardings.</div>
+      </div>
+      <div class="pill" id="updated">Loading…</div>
+    </header>
+
+    <div class="filters">
+      <div><label>Start date</label><input type="date" id="startDate"></div>
+      <div><label>End date</label><input type="date" id="endDate"></div>
+      <div><label>Quick range</label><select id="quickRange"><option value="custom">Custom</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option><option value="14">Last 14 days</option><option value="all">All available</option></select></div>
+      <div><label>&nbsp;</label><button id="applyBtn">Apply filters</button></div>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+    <section class="section">
+      <div class="section-head"><div><h2>1) Paid ads by cohort</h2><div class="note">First classify ads by where they send users: landing2 = paid, landing5 = free.</div></div></div>
+      <div class="table-card"><table id="cohortTable"></table></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div><h2>2) Top ads</h2><div class="note">Sorted by spend. OB = onboarding booked.</div></div></div>
+      <div class="table-card"><table id="adsTable"></table></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div><h2>3) Direct website bookings</h2><div class="note">No ad id on Growth lead. Shows direct/organic traffic by landing destination.</div></div></div>
+      <div class="table-card"><table id="directTable"></table></div>
+    </section>
+
+    <section class="section grid2">
+      <div>
+        <div class="section-head"><div><h2>Before vs after change</h2><div class="note">Before/after website CTA switch to landing2.</div></div></div>
+        <div class="table-card"><table id="beforeAfterTable"></table></div>
+      </div>
+      <div>
+        <div class="section-head"><div><h2>Recent bookings</h2><div class="note">Masked phone last 4 digits only.</div></div></div>
+        <div class="table-card"><table id="bookingsTable"></table></div>
+      </div>
+    </section>
+  </div>
+
+<script>
+const fmtInt = (n) => Math.round(n || 0).toLocaleString('en-IN');
+const fmtMoney = (n) => `₹${Math.round(n || 0).toLocaleString('en-IN')}`;
+const fmtPct = (n) => Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '-';
+const sumRows = (rows) => rows.reduce((acc, row) => { ['spend','impressions','clicks','leads','q1','q2','q3','details','wa','ob','obDone'].forEach(k => acc[k] = (acc[k] || 0) + (row[k] || 0)); return acc; }, {});
+const enrich = (row) => ({ ...row, obRate: row.leads ? row.ob / row.leads : null, waRate: row.leads ? row.wa / row.leads : null, costPerOb: row.ob ? row.spend / row.ob : null });
+const inRange = (date, start, end) => (!start || date >= start) && (!end || date <= end);
+const tag = (label) => `<span class="tag ${label.includes('Paid') ? 'paid' : label.includes('Free') ? 'free' : 'direct'}">${label}</span>`;
+function group(rows, keyFn, seedFn) {
+  const map = new Map();
+  for (const row of rows) {
+    const key = keyFn(row);
+    if (!map.has(key)) map.set(key, seedFn(row));
+    const item = map.get(key);
+    ['spend','impressions','clicks','leads','q1','q2','q3','details','wa','ob','obDone'].forEach(k => item[k] = (item[k] || 0) + (row[k] || 0));
+  }
+  return [...map.values()].map(enrich);
+}
+function renderTable(id, headers, rows, rowFn) {
+  const el = document.getElementById(id);
+  if (!rows.length) { el.innerHTML = `<tr><td class="empty">No data for selected range</td></tr>`; return; }
+  el.innerHTML = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(rowFn).join('')}</tbody>`;
+}
+function rowCells(cells) { return `<tr>${cells.map(([v, cls='']) => `<td class="${cls}">${v ?? '-'}</td>`).join('')}</tr>`; }
+let report;
+function setQuickRange(value) {
+  const end = report.max_date;
+  if (value === 'all') { document.getElementById('startDate').value = report.min_date; document.getElementById('endDate').value = end; return; }
+  if (value === 'custom') return;
+  const d = new Date(`${end}T00:00:00`); d.setDate(d.getDate() - Number(value) + 1);
+  document.getElementById('startDate').value = d.toISOString().slice(0,10);
+  document.getElementById('endDate').value = end;
+}
+function render() {
+  const start = document.getElementById('startDate').value;
+  const end = document.getElementById('endDate').value;
+  const adRows = report.ad_rows.filter(r => inRange(r.date, start, end));
+  const directRows = report.direct_rows.filter(r => inRange(r.date, start, end));
+  const bookingRows = report.booking_rows.filter(r => inRange(r.date, start, end));
+  const paidCohorts = group(adRows, r => r.cohort, r => ({ cohort:r.cohort }));
+  const totalAds = enrich(sumRows(adRows));
+  const totalDirect = enrich(sumRows(directRows));
+  const paid = paidCohorts.find(r => r.cohort === 'Paid Cohort') || {};
+  const free = paidCohorts.find(r => r.cohort === 'Free Cohort') || {};
+  document.getElementById('cards').innerHTML = [
+    ['Paid Cohort OB', fmtInt(paid.ob), `${fmtMoney(paid.spend)} spend · CPA ${fmtMoney(paid.costPerOb)}`],
+    ['Free Cohort OB', fmtInt(free.ob), `${fmtMoney(free.spend)} spend · CPA ${fmtMoney(free.costPerOb)}`],
+    ['Direct Website OB', fmtInt(totalDirect.ob), `${fmtInt(totalDirect.leads)} leads · ${fmtInt(totalDirect.wa)} WA`],
+    ['Total OB', fmtInt((totalAds.ob||0)+(totalDirect.ob||0)), `${fmtInt((totalAds.leads||0)+(totalDirect.leads||0))} total leads`],
+  ].map(([label,value,hint]) => `<div class="card"><div class="label">${label}</div><div class="value">${value}</div><div class="hint">${hint}</div></div>`).join('');
+  renderTable('cohortTable', ['Cohort','Spend','Clicks','Leads','WA','OB','OB Done','OB Rate','Cost / OB'], paidCohorts.sort((a,b)=>(b.spend||0)-(a.spend||0)), r => rowCells([[tag(r.cohort)], [fmtMoney(r.spend),'num'], [fmtInt(r.clicks),'num'], [fmtInt(r.leads),'num'], [fmtInt(r.wa),'num'], [fmtInt(r.ob),'num'], [fmtInt(r.obDone),'num'], [fmtPct(r.obRate),'num'], [fmtMoney(r.costPerOb),'num']]));
+  const ads = group(adRows, r => `${r.cohort}|${r.variant}|${r.ad_id}`, r => ({ cohort:r.cohort, variant:r.variant, ad_id:r.ad_id, ad_name:r.ad_name })).sort((a,b)=>(b.spend||0)-(a.spend||0));
+  renderTable('adsTable', ['Cohort','Landing','Ad ID','Ad name','Spend','Leads','WA','OB','CPA'], ads, r => rowCells([[tag(r.cohort)], [r.variant], [r.ad_id], [r.ad_name], [fmtMoney(r.spend),'num'], [fmtInt(r.leads),'num'], [fmtInt(r.wa),'num'], [fmtInt(r.ob),'num'], [fmtMoney(r.costPerOb),'num']]));
+  const direct = group(directRows, r => r.bucket, r => ({ bucket:r.bucket, variant:r.variant })).sort((a,b)=>(b.ob||0)-(a.ob||0));
+  renderTable('directTable', ['Direct bucket','Leads','WA','OB','OB Done','OB Rate'], direct, r => rowCells([[tag(r.bucket)], [fmtInt(r.leads),'num'], [fmtInt(r.wa),'num'], [fmtInt(r.ob),'num'], [fmtInt(r.obDone),'num'], [fmtPct(r.obRate),'num']]));
+  const cutoffDate = report.cutoff_ist.slice(0,10);
+  const beforeAfter = ['before','after'].map(period => {
+    const filter = (r) => period === 'before' ? r.date < cutoffDate : r.date >= cutoffDate;
+    const a = enrich(sumRows(report.ad_rows.filter(filter)));
+    const d = enrich(sumRows(report.direct_rows.filter(filter)));
+    return { period: period === 'before' ? 'Before switch' : 'After switch', adOb:a.ob, adSpend:a.spend, adCpa:a.costPerOb, directOb:d.ob, directLeads:d.leads };
+  });
+  renderTable('beforeAfterTable', ['Period','Ad OB','Ad spend','Ad CPA','Direct OB','Direct leads'], beforeAfter, r => rowCells([[r.period], [fmtInt(r.adOb),'num'], [fmtMoney(r.adSpend),'num'], [fmtMoney(r.adCpa),'num'], [fmtInt(r.directOb),'num'], [fmtInt(r.directLeads),'num']]));
+  renderTable('bookingsTable', ['Booked','Source','Landing','Ad ID','Phone'], bookingRows.slice(-12).reverse(), r => rowCells([[r.booked_at_ist.slice(5,16)], [r.source_type], [r.variant], [r.ad_id], [`••••${r.phone_last4}`]]));
+}
+fetch('./data.json', { cache: 'no-store' }).then(r => r.json()).then(data => {
+  report = data;
+  document.getElementById('updated').textContent = `Updated ${data.generated_at_ist} IST`;
+  document.getElementById('startDate').value = data.min_date;
+  document.getElementById('endDate').value = data.max_date;
+  document.getElementById('quickRange').value = 'all';
+  document.getElementById('quickRange').addEventListener('change', e => { setQuickRange(e.target.value); render(); });
+  document.getElementById('applyBtn').addEventListener('click', render);
+  render();
+}).catch(err => {
+  document.body.innerHTML = `<div class="wrap"><h1>Could not load report data</h1><p>${err.message}</p></div>`;
+});
+</script>
+</body>
+</html>
